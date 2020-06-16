@@ -132,7 +132,7 @@ app.post("/events", (req, res) => {
 
   // Create a new calender instance.
   const calendar = google.calendar({ version: "v3", auth: oAuth2Client });
-  
+
   // Create a new event start date instance for temp uses in our calendar.
   const eventStartTime = new Date();
   eventStartTime.setDate(eventStartTime.getDay() + 2);
@@ -147,45 +147,40 @@ app.post("/events", (req, res) => {
     description: `${req.body.description}`,
     colorId: 6,
     conferenceData: {
-        createRequest: {requestId: "7qxalsvy0s"},
-        conferenceDataVersion:1,
-        entryPoints: [
-            {
-             entryPointType: "video",
-             uri: "meet.google.com/wix-pvpt-njj",
-             label: "meet.google.com/wix-pvpt-njj"
-            },
-            {
-             entryPointType: "phone",
-             uri: +44-20-3873-7652,
-             label: +44-20-3873-7652,
-             pin: 6054226
-            }
-           ],
-           conferenceSolution: {
-            key: {
-             type: hangoutsMeet
-            },
-            name: "Hangouts Meet",
-            ziconUri: "https://lh5.googleusercontent.com/proxy/bWvYBOb7O03a7HK5iKNEAPoUNPEXH1CHZjuOkiqxHx8OtyVn9sZ6Ktl8hfqBNQUUbCDg6T2unnsHx7RSkCyhrKgHcdoosAW8POQJm_ZEvZU9ZfAE7mZIBGr_tDlF8Z_rSzXcjTffVXg3M46v"
-           },
-           conferenceId: wix-pvpt-njj,
-           signature: ADwwud9tLfjGQPpT7bdP8f3bq3DS
-        
+      createRequest: { requestId: "7qxalsvy0s" },
+      conferenceDataVersion: 1,
+      entryPoints: [
+        {
+          entryPointType: "video",
+          uri: "meet.google.com/wix-pvpt-njj",
+          label: "meet.google.com/wix-pvpt-njj",
+        },
+        {
+          entryPointType: "phone",
+          uri: "+44-20-3873-7652",
+          label: "+44-20-3873-7652",
+          pin: "6054226",
+        },
+      ],
+      conferenceSolution: {
+        key: {
+          type: "hangoutsMeet",
+        },
+        name: "Hangouts Meet",
+        ziconUri:
+          "https://lh5.googleusercontent.com/proxy/bWvYBOb7O03a7HK5iKNEAPoUNPEXH1CHZjuOkiqxHx8OtyVn9sZ6Ktl8hfqBNQUUbCDg6T2unnsHx7RSkCyhrKgHcdoosAW8POQJm_ZEvZU9ZfAE7mZIBGr_tDlF8Z_rSzXcjTffVXg3M46v",
       },
+      conferenceId: "wix-pvpt-njj",
+      signature: "ADwwud9tLfjGQPpT7bdP8f3bq3DS",
+    },
     start: {
       dateTime: eventStartTime,
     },
     end: {
       dateTime: eventEndTime,
     },
-   
   };
- 
 
-  
-  
-  
   // Check if we a busy and have an event on our calendar for the same time.
   calendar.freebusy.query(
     {
@@ -233,8 +228,6 @@ app.post("/events", (req, res) => {
     subject: req.body.summary,
     text: req.body.description,
     html: req.body.description,
-    link: event.htmlLink
-    
   };
 
   sgMail
