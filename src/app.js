@@ -10,7 +10,9 @@ app.set("view engine", "html");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-let var_arr=['Extracting finished. Refresh the browser to see your Google events'];
+let var_arr = [
+  "Extracting finished. Refresh the browser to see your Google events",
+];
 
 app.get("/", (req, res) => {
   res.render("index.html");
@@ -99,7 +101,7 @@ app.post("/", (req, res) => {
           if (events.length) {
             console.log("Upcoming 10 events:", events);
             events.map((event, i) => {
-                var_arr.push(event);
+              var_arr.push(event);
             });
           } else {
             console.log("No upcoming events found.");
@@ -112,6 +114,140 @@ app.post("/", (req, res) => {
   }
   res.send(var_arr);
   res.render("index.html");
+});
+
+app.post("/events", (req, res) => {
+  const { google } = require("googleapis");
+  // Require oAuth2 from our google instance.
+  const { OAuth2 } = google.auth;
+  const oAuth2Client = new OAuth2(
+    process.env.CLIENT_ID,
+    process.env.CLIENT_SECRET
+  );
+
+  // Call the setCredentials method on our oAuth2Client instance and set our refresh token.
+  oAuth2Client.setCredentials({
+    refresh_token: process.env.REFRESH_TOKEN,
+  });
+
+  // Create a new calender instance.
+  const calendar = google.calendar({ version: "v3", auth: oAuth2Client });
+  
+  // Create a new event start date instance for temp uses in our calendar.
+  const eventStartTime = new Date();
+  eventStartTime.setDate(eventStartTime.getDay() + 2);
+
+  // Create a new event end date instance for temp uses in our calendar.
+  const eventEndTime = new Date();
+  eventEndTime.setDate(eventEndTime.getDay() + 2);
+  eventEndTime.setMinutes(eventEndTime.getMinutes() + 60);
+  // Create a dummy event for temp uses in our calendar
+  const event = {
+    summary: `${req.body.summary}`,
+    description: `${req.body.description}`,
+    colorId: 6,
+    conferenceData: {
+        createRequest: {requestId: "7qxalsvy0s"},
+        conferenceDataVersion:1,
+        entryPoints: [
+            {
+             entryPointType: "video",
+             uri: "meet.google.com/wix-pvpt-njj",
+             label: "meet.google.com/wix-pvpt-njj"
+            },
+            {
+             entryPointType: "phone",
+             uri: +44-20-3873-7652,
+             label: +44-20-3873-7652,
+             pin: 6054226
+            }
+           ],
+           conferenceSolution: {
+            key: {
+             type: hangoutsMeet
+            },
+            name: "Hangouts Meet",
+            ziconUri: "https://lh5.googleusercontent.com/proxy/bWvYBOb7O03a7HK5iKNEAPoUNPEXH1CHZjuOkiqxHx8OtyVn9sZ6Ktl8hfqBNQUUbCDg6T2unnsHx7RSkCyhrKgHcdoosAW8POQJm_ZEvZU9ZfAE7mZIBGr_tDlF8Z_rSzXcjTffVXg3M46v"
+           },
+           conferenceId: wix-pvpt-njj,
+           signature: ADwwud9tLfjGQPpT7bdP8f3bq3DS
+        
+      },
+    start: {
+      dateTime: eventStartTime,
+    },
+    end: {
+      dateTime: eventEndTime,
+    },
+   
+  };
+ 
+
+  
+  
+  
+  // Check if we a busy and have an event on our calendar for the same time.
+  calendar.freebusy.query(
+    {
+      resource: {
+        timeMin: eventStartTime,
+        timeMax: eventEndTime,
+        items: [{ id: "primary" }],
+      },
+    },
+    (err, res) => {
+      // Check for errors in our query and log them if they exist.
+      if (err) return console.error("Free Busy Query Error: ", err);
+
+      // Create an array of all events on our calendar during that time.
+      const eventArr = res.data.calendars.primary.busy;
+
+      // Check if event array is empty which means we are not busy
+      if (eventArr.length === 0) {
+        // If we are not busy create a new calendar event.
+        return calendar.events.insert(
+          { calendarId: "primary", resource: event },
+          (err) => {
+            // Check for errors and log them if they exist.
+            if (err)
+              return console.error("Error Creating Calender Event:", err);
+            // Else log that the event was created.
+            return console.log("Event created successfully.");
+          }
+        );
+      }
+      // If event array is not empty log that we are busy.
+      return console.log(`Sorry I'm busy for that time...`);
+    }
+  );
+
+  console.log(req.body);
+
+  // using Twilio SendGrid's v3 Node.js Library
+  // https://github.com/sendgrid/sendgrid-nodejs
+  const sgMail = require("@sendgrid/mail");
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  const msg = {
+    to: req.body.to,
+    from: "meetapp3@gmail.com",
+    subject: req.body.summary,
+    text: req.body.description,
+    html: req.body.description,
+    link: event.htmlLink
+    
+  };
+
+  sgMail
+    .send(msg)
+    .then(() => {
+      console.log("Message sent");
+    })
+    .catch((error) => {
+      console.log(error.response.body);
+      // console.log(error.response.body.errors[0].message)
+    });
+
+  res.render("events.html");
 });
 
 app.listen(3000, (req, res) => {
